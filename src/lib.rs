@@ -88,7 +88,14 @@ fn apply_mapping(mapping: &HashMap<&str, u64>, line: &str) -> String {
     } else {
         res = line.to_string();
     }
-    mapping.iter().for_each(|(key, val)| {
+    let mut v: Vec<(&str, u64)> = Vec::new();
+    mapping.iter().for_each(|(key, &val)| v.push((key, val)));
+    v.sort_by(|a, b| {
+        let (key, _val) = a;
+        let (key_2, _val_2) = b;
+        key_2.len().partial_cmp(&key.len()).unwrap()
+    });
+    v.iter().for_each(|(key, val)| {
         let mut expected = " ".to_string();
         expected.push_str(key);
         if res.contains(&expected) {
