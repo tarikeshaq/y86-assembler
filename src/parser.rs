@@ -74,7 +74,7 @@ pub fn parse(line: &String) -> Result<Vec<u8>, Box<dyn Error>> {
 pub fn get_icode_from_string(string: &str) -> Result<ICode, Box<dyn Error>> {
     let b: u8 = match INSTRUCTION_CODE.get(string) {
         Some(&val) => val,
-        None => Err(Box::new(InvalidInstructionError))?
+        None => Err(Box::new(InvalidInstructionError))?,
     };
     get_icode_from_byte(b)
 }
@@ -85,7 +85,7 @@ pub fn parse_quad(line: &String) -> Result<Vec<u8>, Box<dyn Error>> {
     let val = split.next().unwrap();
     let parsed = get_immediate(val.trim())?;
     let mut res = vec![];
-    push_le(&mut res,parsed);
+    push_le(&mut res, parsed);
     Ok(res)
 }
 
@@ -195,9 +195,7 @@ fn get_immediate(value: &str) -> Result<u64, Box<dyn std::error::Error>> {
 fn get_register(value: &str) -> Result<u8, Box<dyn std::error::Error>> {
     match REGISTERS.get(value.trim()) {
         Some(&val) => Ok(val),
-        None => {
-            Err(Box::new(InvalidRegisterError))
-        } 
+        None => Err(Box::new(InvalidRegisterError)),
     }
 }
 

@@ -1,5 +1,5 @@
-use clap::App;
 use assembler::Y86Assembler;
+use clap::App;
 use std::error::Error;
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = App::new("Y86 Debugger")
@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .value_of("INPUT")
         .expect("Please input a file to debug")
         .to_string();
-    
+
     let mut assembler = Y86Assembler::from_file(file_name.clone())?;
     assembler.to_file(file_name + ".mem")?;
     Ok(())

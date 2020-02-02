@@ -1,17 +1,17 @@
 use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::error::Error;
-use std::io::prelude::*;
 use std::fs::File;
 use std::io;
+use std::io::prelude::*;
 use std::io::BufRead;
 use std::u64;
-use std::collections::HashMap;
-mod parser;
 mod number_parser;
+mod parser;
 use parser::ICode;
 
 pub struct Y86Assembler {
-    bytes: Vec<u8>
+    bytes: Vec<u8>,
 }
 
 impl Y86Assembler {
@@ -20,8 +20,8 @@ impl Y86Assembler {
         let lines: Vec<String> = lines_iter.map(|val| val.unwrap()).collect();
         let mut positions: BTreeMap<u64, Vec<u8>> = BTreeMap::new();
         get_positions(&mut positions, &lines)?;
-        Ok(Y86Assembler{
-            bytes: merge_position(&positions)
+        Ok(Y86Assembler {
+            bytes: merge_position(&positions),
         })
     }
 
@@ -56,17 +56,20 @@ fn get_positions(
     let mut curr_position = 0;
     let trimmed = lines.iter().map(|line| trim_line(&line)).collect();
     let mapping: HashMap<&str, u64> = map_labels(&trimmed)?;
-    let val: Result<(), Box<dyn Error>> = trimmed.iter().map(|line| apply_mapping(&mapping, &line)).try_for_each(|line| {
-        if line.starts_with(".pos") {
-            let position: u64 = number_parser::parse_num(&line[5..])?;
-            positions.insert(position, vec![]);
-            curr_position = position;
-        } else {
-            let curr_vec = positions.entry(curr_position).or_insert(vec![]);
-            curr_vec.append(&mut convert_line(&line)?);
-        }
-        Ok(())
-    });
+    let val: Result<(), Box<dyn Error>> = trimmed
+        .iter()
+        .map(|line| apply_mapping(&mapping, &line))
+        .try_for_each(|line| {
+            if line.starts_with(".pos") {
+                let position: u64 = number_parser::parse_num(&line[5..])?;
+                positions.insert(position, vec![]);
+                curr_position = position;
+            } else {
+                let curr_vec = positions.entry(curr_position).or_insert(vec![]);
+                curr_vec.append(&mut convert_line(&line)?);
+            }
+            Ok(())
+        });
     val
 }
 
@@ -81,7 +84,7 @@ fn trim_line(line: &String) -> String {
 fn apply_mapping(mapping: &HashMap<&str, u64>, line: &String) -> String {
     let mut res = String::new();
     if line.contains(":") {
-        res.push_str(line[line.find(":").unwrap() + 1 ..].trim());
+        res.push_str(line[line.find(":").unwrap() + 1..].trim());
     } else {
         res = line.clone();
     }
@@ -103,7 +106,7 @@ fn instr_size(line: &String) -> Result<u64, Box<dyn Error>> {
         ICode::IRRMVXX | ICode::IOPQ | ICode::IPOPQ | ICode::IPUSHQ => 2,
         ICode::IJXX | ICode::ICALL => 9,
         ICode::IHALT | ICode::INOP | ICode::IRET => 1,
-        _ => 0
+        _ => 0,
     };
     Ok(val)
 }
