@@ -1,8 +1,0 @@
-.pos 0x1000
-irmovq 10, %rax
-
-
-
-.pos 0x400
-
-.pos 0x500
