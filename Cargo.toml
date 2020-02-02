@@ -1,6 +1,6 @@
 [package]
 name = "y86-assembler"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Tarik <tarikishaq@hotmail.com>"]
 edition = "2018"
 description = "A Y86 assembler CLI based on clap"
