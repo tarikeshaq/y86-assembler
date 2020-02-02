@@ -189,10 +189,7 @@ fn form_byte(first: u8, second: u8) -> u8 {
 }
 
 fn get_immediate(value: &str) -> Result<u64, Box<dyn std::error::Error>> {
-    match u64::from_str_radix(&value[2..], 16) {
-        Ok(val) => Ok(val),
-        Err(e) => Err(Box::new(e)),
-    }
+    crate::number_parser::parse_num(value)
 }
 
 fn get_register(value: &str) -> Result<u8, Box<dyn std::error::Error>> {
@@ -215,7 +212,11 @@ fn parse_irmovq(line: &String, res: &mut Vec<u8>) -> Result<(), Box<dyn std::err
     let instr_val = split.next().unwrap();
     let mut instr_val = instr_val.split(" ");
     instr_val.next();
-    let val_c = get_immediate(instr_val.next().unwrap().trim())?;
+    let mut first = instr_val.next();
+    while first.is_some() && first.unwrap() == "" {
+        first = instr_val.next();
+    }
+    let val_c = get_immediate(first.unwrap().trim())?;
     let reg = get_register(split.next().unwrap().trim())?;
     let b: u8 = form_byte(0x0F, reg);
     res.push(b);
@@ -290,7 +291,11 @@ fn parse_jxx_call(line: &String, res: &mut Vec<u8>) -> Result<(), Box<dyn std::e
 fn parse_push_pop(line: &String, res: &mut Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
     let mut split = line.trim().split(" ");
     split.next();
-    let reg_a = get_register(split.next().unwrap().trim())?;
+    let mut first = split.next();
+    while first.is_some() && first.unwrap() == "" {
+        first = split.next();
+    }
+    let reg_a = get_register(first.unwrap().trim())?;
     res.push(form_byte(reg_a, 0x0F));
     Ok(())
 }

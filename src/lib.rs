@@ -7,6 +7,7 @@ use std::io::BufRead;
 use std::u64;
 use std::collections::HashMap;
 mod parser;
+mod number_parser;
 use parser::ICode;
 
 pub struct Y86Assembler {
@@ -56,9 +57,8 @@ fn get_positions(
     let trimmed = lines.iter().map(|line| trim_line(&line)).collect();
     let mapping: HashMap<&str, u64> = map_labels(&trimmed)?;
     let val: Result<(), Box<dyn Error>> = trimmed.iter().map(|line| apply_mapping(&mapping, &line)).try_for_each(|line| {
-        println!("{:}",line);
         if line.starts_with(".pos") {
-            let position: u64 = u64::from_str_radix(&line[7..], 16)?;
+            let position: u64 = number_parser::parse_num(&line[5..])?;
             positions.insert(position, vec![]);
             curr_position = position;
         } else {
@@ -75,7 +75,7 @@ fn trim_line(line: &String) -> String {
     if res.contains("#") {
         res = res[..res.find("#").unwrap()].to_string();
     }
-    res
+    res.replace("$", "").to_string()
 }
 
 fn apply_mapping(mapping: &HashMap<&str, u64>, line: &String) -> String {
@@ -113,7 +113,7 @@ fn map_labels(lines: &Vec<String>) -> Result<HashMap<&str, u64>, Box<dyn Error>>
     let mut curr_addr = 0;
     let val: Result<(), Box<dyn Error>> = lines.iter().try_for_each(|line| {
         if line.starts_with(".pos") {
-            let position: u64 = u64::from_str_radix(&line[7..], 16)?;
+            let position: u64 = number_parser::parse_num(&line[5..])?;
             curr_addr = position;
         } else {
             if line.contains(":") {
