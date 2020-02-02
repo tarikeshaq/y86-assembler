@@ -25,7 +25,7 @@ impl Y86Assembler {
         })
     }
 
-    pub fn to_file(&mut self, file_name: String) -> Result<(), Box<dyn Error>> {
+    pub fn save_file(&mut self, file_name: String) -> Result<(), Box<dyn Error>> {
         let mut file = File::create(file_name)?;
         file.write_all(&self.bytes)?;
         Ok(())
@@ -33,14 +33,14 @@ impl Y86Assembler {
 
     pub fn print(&self) {
         self.bytes.iter().for_each(|b| print!("{:02x}", b));
-        println!("");
+        println!();
     }
 }
 
 fn merge_position(positions: &BTreeMap<u64, Vec<u8>>) -> Vec<u8> {
-    let mut iter = positions.iter();
+    let iter = positions.iter();
     let mut res = vec![];
-    while let Some((key, val)) = iter.next() {
+    for (key, val) in iter {
         while res.len() < *key as usize {
             res.push(0);
         }
@@ -51,10 +51,10 @@ fn merge_position(positions: &BTreeMap<u64, Vec<u8>>) -> Vec<u8> {
 
 fn get_positions(
     positions: &mut BTreeMap<u64, Vec<u8>>,
-    lines: &Vec<String>,
+    lines: &[String],
 ) -> Result<(), Box<dyn Error>> {
     let mut curr_position = 0;
-    let trimmed = lines.iter().map(|line| trim_line(&line)).collect();
+    let trimmed: Vec<String> = lines.iter().map(|line| trim_line(&line)).collect();
     let mapping: HashMap<&str, u64> = map_labels(&trimmed)?;
     let val: Result<(), Box<dyn Error>> = trimmed
         .iter()
@@ -65,7 +65,7 @@ fn get_positions(
                 positions.insert(position, vec![]);
                 curr_position = position;
             } else {
-                let curr_vec = positions.entry(curr_position).or_insert(vec![]);
+                let curr_vec = positions.entry(curr_position).or_insert_with(|| vec![]);
                 curr_vec.append(&mut convert_line(&line)?);
             }
             Ok(())
@@ -73,33 +73,33 @@ fn get_positions(
     val
 }
 
-fn trim_line(line: &String) -> String {
+fn trim_line(line: &str) -> String {
     let mut res = line.trim().to_string();
-    if res.contains("#") {
-        res = res[..res.find("#").unwrap()].to_string();
+    if res.contains('#') {
+        res = res[..res.find('#').unwrap()].to_string();
     }
-    res.replace("$", "").to_string()
+    res.replace("$", "")
 }
 
-fn apply_mapping(mapping: &HashMap<&str, u64>, line: &String) -> String {
+fn apply_mapping(mapping: &HashMap<&str, u64>, line: &str) -> String {
     let mut res = String::new();
-    if line.contains(":") {
-        res.push_str(line[line.find(":").unwrap() + 1..].trim());
+    if line.contains(':') {
+        res.push_str(line[line.find(':').unwrap() + 1..].trim());
     } else {
-        res = line.clone();
+        res = line.to_string();
     }
     mapping.iter().for_each(|(key, val)| {
         let mut expected = " ".to_string();
         expected.push_str(key);
         if res.contains(&expected) {
-            res = res.replace(key, &format!("0x{:x}", val)).to_string();
+            res = res.replace(key, &format!("0x{:x}", val));
         }
     });
     res
 }
 
-fn instr_size(line: &String) -> Result<u64, Box<dyn Error>> {
-    let mut split = line.split(" ");
+fn instr_size(line: &str) -> Result<u64, Box<dyn Error>> {
+    let mut split = line.split(' ');
     let instr = split.next().unwrap();
     let val = match parser::get_icode_from_string(instr)? {
         ICode::IIRMOVQ | ICode::IRMMOVQ | ICode::IMRMOVQ => 10,
@@ -111,7 +111,7 @@ fn instr_size(line: &String) -> Result<u64, Box<dyn Error>> {
     Ok(val)
 }
 
-fn map_labels(lines: &Vec<String>) -> Result<HashMap<&str, u64>, Box<dyn Error>> {
+fn map_labels(lines: &[String]) -> Result<HashMap<&str, u64>, Box<dyn Error>> {
     let mut res: HashMap<&str, u64> = HashMap::new();
     let mut curr_addr = 0;
     let val: Result<(), Box<dyn Error>> = lines.iter().try_for_each(|line| {
@@ -119,16 +119,16 @@ fn map_labels(lines: &Vec<String>) -> Result<HashMap<&str, u64>, Box<dyn Error>>
             let position: u64 = number_parser::parse_num(&line[5..])?;
             curr_addr = position;
         } else {
-            if line.contains(":") {
-                let mut split = line.split(":");
+            if line.contains(':') {
+                let mut split = line.split(':');
                 res.insert(split.next().unwrap().trim(), curr_addr);
             }
             if line.contains(".quad") {
                 curr_addr += 8;
-            } else if line.len() != 0 {
+            } else if !line.is_empty() {
                 let mut line = line.clone();
-                if line.contains(":") {
-                    line = line[line.find(":").unwrap() + 1..].trim().to_string();
+                if line.contains(':') {
+                    line = line[line.find(':').unwrap() + 1..].trim().to_string();
                 }
                 curr_addr += instr_size(&line)?;
             }
@@ -139,8 +139,8 @@ fn map_labels(lines: &Vec<String>) -> Result<HashMap<&str, u64>, Box<dyn Error>>
     Ok(res)
 }
 
-fn convert_line(line: &String) -> Result<Vec<u8>, Box<dyn Error>> {
-    if line.trim().len() == 0 {
+fn convert_line(line: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    if line.trim().is_empty() {
         return Ok(vec![]);
     }
     parser::parse(line)

@@ -14,6 +14,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .to_string();
 
     let mut assembler = Y86Assembler::from_file(file_name.clone())?;
-    assembler.to_file(file_name + ".mem")?;
+    assembler.save_file(file_name + ".mem")?;
     Ok(())
 }
