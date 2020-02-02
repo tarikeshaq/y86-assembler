@@ -3,7 +3,8 @@ name = "y86-assembler"
 version = "0.1.0"
 authors = ["Tarik <tarikishaq@hotmail.com>"]
 edition = "2018"
-
+description = "A Y86 assembler CLI based on clap"
+license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
