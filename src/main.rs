@@ -1,4 +1,4 @@
-use assembler::Y86Assembler;
+use y86_lib::assembler::Y86Assembler;
 use clap::App;
 use std::error::Error;
 fn main() -> Result<(), Box<dyn Error>> {
